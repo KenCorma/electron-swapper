@@ -10,7 +10,7 @@ import argparse
 import json
 import types
 
-APP_VER = "0.5.0"
+APP_VER = "0.5.1"
 
 # semver.version.Version[]
 availableVersions = []
@@ -162,6 +162,7 @@ if __name__ == '__main__':
 
     if (targetsElectronVer.major < 23):
         print_("Replacement not needed")
+        sys.exit()
 
     # Check if there is a version override 
     if (parsedArgs.override_version != None):
@@ -169,7 +170,7 @@ if __name__ == '__main__':
     else:
         closestVer = DetermineClosesVer(targetsElectronVer)
 
-    print_("Closes" + closestVer.__str__(),1)
+    print_("Closes available version:" + closestVer.__str__(),1)
 
     # Ask Before
     answer = AskYesOrNo("Target Version: {0} will be replaced with {1} . Is that Ok?".format(targetsElectronVer.__str__(),closestVer.__str__()))
@@ -212,7 +213,7 @@ if __name__ == '__main__':
 
     verToUse = "30.5.1" #OV(closestVer.__str__(),parsedArgs.override_version)
 
-    zipDLPath = OV("https://github.com/KenCorma/supermium-electron/releases/download/v{0}/electron-v{1}-win32-x64.zip".format(verToUse + "-0", verToUse), parsedArgs.override_url)
+    zipDLPath = OV("https://github.com/KenCorma/supermium-electron/releases/download/v{0}/electron-v{1}-win32-x64.zip".format(verToUse , verToUse), parsedArgs.override_url)
 
     print_("Downloading: " + zipDLPath,1)
 
