@@ -2,7 +2,7 @@
 
 ### ALPHA 
 
-**Right now this is still in development, the ONLY available election version is 30.1.5 x64, so if the target app is not compatiable with that then there might be issues.**
+**Right now this is still in development, the ONLY available electron version is 30.1.5 x64, so if the target app is not compatiable with that then there might be issues.**
 
 Electron Swapper is a windows program that will swap an App's electron core with a Supermium version ( or supplied mirror ) to enable broad win32 support across Windows generations. 
 
