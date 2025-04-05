@@ -33,6 +33,8 @@ options:
                         Use this version instead of them one from the target
   -ou URL, --override-url URL
                         Overide the url used to inject target with new electron
+  -oa x32 / x64, --override-arch x32 / x64
+                        Override which arch to use
   --verbose NUMBER      Level of verbosity, 0 - 2, lower is less
 ```
 
