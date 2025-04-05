@@ -12,6 +12,43 @@ import types
 
 APP_VER = "0.5.1"
 
+MOVEOUT_LIST = {
+    ">=0.0.0||<=20.0.0" : [
+        "locales",
+        "chrome_100_percent.pak",
+        "chrome_200_percent.pak",
+        "d3dcompiler_47.dll",
+        "ffmpeg.dll",
+        "icudtl.dat",
+        "libEGL.dll",
+        "libGLESv2.dll",
+        "LICENSE.electron.txt",
+        "LICENSES.chromium.html",
+        "resources.pak",
+        "snapshot_blob.bin",
+        "v8_context_snapshot.bin",
+        "vk_swiftshader.dll",
+        "vk_swiftshader_icd.json",
+    ],
+    ">=20.0.0||<=36.0.0" : [
+        "locales",
+        "chrome_100_percent.pak",
+        "chrome_200_percent.pak",
+        "d3dcompiler_47.dll",
+        "ffmpeg.dll",
+        "icudtl.dat",
+        "libEGL.dll",
+        "libGLESv2.dll",
+        "LICENSE.electron.txt",
+        "LICENSES.chromium.html",
+        "resources.pak",
+        "snapshot_blob.bin",
+        "v8_context_snapshot.bin",
+        "vk_swiftshader.dll",
+        "vk_swiftshader_icd.json",
+    ]
+}
+
 # semver.version.Version[]
 availableVersions = []
 
@@ -63,6 +100,8 @@ def DetermineClosesVer(targetVer):
 def RevertInjection(receiptPath):
     with open(receiptPath) as f:
         receiptData = json.load(f)
+    if ( AskYesOrNo("Do you want to revert {0} ?".format(os.path.basename(receiptPath))) == False ) :
+        sys.exit()
     topPath = receiptPath.replace(os.path.basename(receiptPath),'')
     backupPath = topPath + "backup\\"
     for injFile in receiptData['newFiles']:
@@ -96,6 +135,15 @@ def AskYesOrNo(message):
     else:
         AskYesOrNo(message)
 
+# Semver package currently does not have a range function
+def IsInRange(version, rangeString):
+    rangeParse = rangeString.split("||")
+    minVer = rangeParse[0]
+    maxVer = rangeParse[1]
+    minOK = version.match(minVer)
+    maxOK = version.match(maxVer)
+    return minOK and maxOK
+
 if __name__ == '__main__':
 
     # Set arg handlers
@@ -105,6 +153,7 @@ if __name__ == '__main__':
     argHandler.add_argument("-r","--revert",metavar="PATH", help="Path to receipt file to revert the injection", type=str)
     argHandler.add_argument("-ov","--override-version",metavar="\"x.y.z\"", help="Use this version instead of them one from the target", type=str)
     argHandler.add_argument("-ou","--override-url",metavar="URL",help="Overide the url used to inject target with new electron", type=str)
+    argHandler.add_argument("-oa","--override-arch",metavar="x32 / x64", help="Override which arch to use", type=str)
     argHandler.add_argument("--verbose",metavar="NUMBER", help="Level of verbosity, 0 - 2, lower is less", type=int,default=0)
     argHandler.add_argument("dragTarget", nargs=argparse.REMAINDER, help="Enables Drag and Drop targets for default swapping or reverting")
     parsedArgs = argHandler.parse_args()
@@ -159,10 +208,7 @@ if __name__ == '__main__':
 
     eFound = re.search("Electron/[0-9.]*", found)
     targetsElectronVer = semver.version.Version.parse(eFound.group(0).replace("Electron/",""))
-
-    if (targetsElectronVer.major < 23):
-        print_("Replacement not needed")
-        sys.exit()
+    targetArch = OV("x64", parsedArgs.override_arch)
 
     # Check if there is a version override 
     if (parsedArgs.override_version != None):
@@ -173,29 +219,26 @@ if __name__ == '__main__':
     print_("Closes available version:" + closestVer.__str__(),1)
 
     # Ask Before
-    answer = AskYesOrNo("Target Version: {0} will be replaced with {1} . Is that Ok?".format(targetsElectronVer.__str__(),closestVer.__str__()))
+    answer = AskYesOrNo("Target Version: {0} will be replaced with {1} {2}. Is that Ok?".format(targetsElectronVer.__str__(),closestVer.__str__(), targetArch))
     
     if (answer == False):
         sys.exit()
-    
-    replaceFiles = [
-        "locales",
-        "chrome_100_percent.pak",
-        "chrome_200_percent.pak",
-        "d3dcompiler_47.dll",
-        "ffmpeg.dll",
-        "icudtl.dat",
-        "libEGL.dll",
-        "libGLESv2.dll",
-        "LICENSE.electron.txt",
-        "LICENSES.chromium.html",
-        "resources.pak",
-        "snapshot_blob.bin",
-        "v8_context_snapshot.bin",
-        "vk_swiftshader.dll",
-        "vk_swiftshader_icd.json",
-        exeName
-    ]
+
+    replaceFiles = [ exeName ]
+
+    # Get the files needed to be moved to backup 
+    for verRanges in MOVEOUT_LIST:
+        if (IsInRange(targetsElectronVer,verRanges)):
+            replaceFiles += MOVEOUT_LIST.get(verRanges)
+            break
+
+    # If for some reason we don't have info on this version ask for default
+    if (len(replaceFiles) <= 1):
+        print_("Can not determine what files to move out from version {0}.".format(targetsElectronVer.__str__()))
+        if (AskYesOrNo("Use default? ")):
+            replaceFiles += MOVEOUT_LIST[next(iter(MOVEOUT_LIST))]
+        else:
+            sys.exit()
 
     # Set up receipt Object 
     receiptData = types.SimpleNamespace()
@@ -213,9 +256,10 @@ if __name__ == '__main__':
 
     verToUse = "30.5.1" #OV(closestVer.__str__(),parsedArgs.override_version)
 
-    zipDLPath = OV("https://github.com/KenCorma/supermium-electron/releases/download/v{0}/electron-v{1}-win32-x64.zip".format(verToUse , verToUse), parsedArgs.override_url)
+    zipDLPath = OV("https://github.com/KenCorma/supermium-electron/releases/download/v{0}/electron-v{1}-win32-{2}.zip".format(verToUse , verToUse, targetArch), parsedArgs.override_url)
 
     print_("Downloading: " + zipDLPath,1)
+    receiptData.url = zipDLPath
 
     # Download and unpack zip
     zip_path, _ = urllib.request.urlretrieve(zipDLPath)
