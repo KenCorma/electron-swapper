@@ -1,11 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import sys
+sys.path.append("src\\")
+import swapper
 
 a = Analysis(
     ['src\\swapper.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[
+        ('src\\LogoIcon.ico','.')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -23,6 +28,7 @@ exe = EXE(
     exclude_binaries=True,
     name='electron-swapper',
     debug=False,
+    icon='src\\LogoIcon.ico',
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
@@ -32,6 +38,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    version='src\\version.rc',
 )
 coll = COLLECT(
     exe,

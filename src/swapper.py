@@ -10,7 +10,10 @@ import argparse
 import json
 import types
 
-APP_VER = "0.5.1"
+APP_VER = "0.6.0"
+BUILD_NUM = 0
+
+EXE_VER = semver.version.Version.parse(APP_VER).to_tuple()[0:-2] + tuple((BUILD_NUM,))
 
 MOVEOUT_LIST = {
     ">=0.0.0||<=20.0.0" : [
