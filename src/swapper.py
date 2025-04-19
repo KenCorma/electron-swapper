@@ -10,7 +10,7 @@ import argparse
 import json
 import types
 
-APP_VER = "0.6.0"
+APP_VER = "0.6.1"
 BUILD_NUM = 0
 
 EXE_VER = semver.version.Version.parse(APP_VER).to_tuple()[0:-2] + tuple((BUILD_NUM,))
@@ -200,7 +200,7 @@ if __name__ == '__main__':
     selectCommand = "select-string -Path \"{0}\" -Pattern \"{1}\" -AllMatches"
     mainPath = os.path.normpath(electronTargetPath)
     exeName = os.path.basename(electronTargetPath)
-    regexPattern = "Chrome/[0-9.]* Electron/[0-9.]*"
+    regexPattern = "[]Chrome/[0-9.]* Electron/[0-9.]*"
     commandReturn = PSRun(selectCommand.format(mainPath,regexPattern))
     stringMatch = re.search(regexPattern, commandReturn.stdout.decode())
     if stringMatch:
